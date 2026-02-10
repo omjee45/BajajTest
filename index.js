@@ -41,33 +41,41 @@ function lcm(a, b) {
 
 async function askAI(question) {
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.MY_SPECIAL_KEY;
     
     if (!apiKey) {
-      console.error("Error: GEMINI_API_KEY is missing in .env");
-      return "KeyError";
+      throw new Error("MY_SPECIAL_KEY is missing in .env");
     }
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    const url = "https://api.groq.com/openai/v1/chat/completions";
 
-    const response = await axios.post(url, {
-      contents: [
-        {
-          parts: [{ text: question + " Answer in one single word." }]
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey.trim()}`
+      }
+    };
+
+    const data = {
+      model: "openai/gpt-oss-120b", 
+      messages: [
+        { 
+          role: "user", 
+          content: question + " Answer in one single word." 
         }
       ]
-    });
+    };
 
-    const text = response.data.candidates[0].content.parts[0].text;
-    
-    return text.trim().split(/\s+/)[0].replace(/[^\w]/g, "");
+    const response = await axios.post(url, data, config);
+        const text = response.data.choices[0].message.content;
+        return text.trim().split(/\s+/)[0].replace(/[^\w]/g, "");
 
   } catch (error) {
-    console.error("AI API Error:", error.response?.data || error.message);
-    return "Error";
+    console.error("AI Error (Groq):", error.response?.data || error.message);
+    
+    
   }
 }
-
 app.get("/health", (req, res) => {
   res.status(200).json({
     is_success: true,
